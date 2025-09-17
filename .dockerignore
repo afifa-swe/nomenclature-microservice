@@ -1,0 +1,12 @@
+cat > .dockerignore << 'EOF'
+.git
+vendor
+node_modules
+.env
+.env.*
+.idea
+.vscode
+npm-debug.log
+yarn-error.log
+composer.lock
+EOF
