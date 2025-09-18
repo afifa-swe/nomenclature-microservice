@@ -12,7 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // register global middleware class map
+        $middleware->prepend('\App\Http\Middleware\JsonResponseMiddleware');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
