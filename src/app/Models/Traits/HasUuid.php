@@ -2,14 +2,15 @@
 
 namespace App\Models\Traits;
 
-
 use Illuminate\Support\Str;
 
 trait HasUuid
 {
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    public function initializeHasUuid(): void
+    {
+        $this->incrementing = false;
+        $this->keyType = 'string';
+    }
 
     protected static function bootHasUuid(): void
     {

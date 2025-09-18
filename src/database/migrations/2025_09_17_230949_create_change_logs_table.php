@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('change_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
-            $table->uuid('user_id')->index();
+            $table->uuid('user_id')->nullable();
 
             $table->string('entity_type')->index();
             $table->uuid('entity_id')->index();

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsChanges;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Traits\HasUuid;
 
 class Supplier extends Model
 {
-    use HasUuid;
+    use HasUuid,HasFactory,LogsChanges;
 
     protected $fillable = [
         'name',
