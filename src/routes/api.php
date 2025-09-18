@@ -8,4 +8,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('products/import', [\App\Http\Controllers\Api\ProductController::class, 'import']);
 
     Route::apiResource('categories', \App\Http\Controllers\Api\CategoryController::class);
+
+    Route::apiResource('suppliers', \App\Http\Controllers\Api\SupplierController::class);
 });
