@@ -1,0 +1,167 @@
+{
+  "info": {
+    "name": "Nomenclature API",
+    "_postman_id": "b7e8d9a2-0000-4000-8000-000000000001",
+    "description": "Postman collection for the Nomenclature microservice (Products, Categories, Suppliers, ChangeLogs)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "default" },
+    { "key": "token", "value": "", "type": "default" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});" ] }
+            }
+          ]
+        },
+        {
+          "name": "Get Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/:id", "host": ["{{base_url}}"], "path": ["api", "products", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Example product\",\n  \"sku\": \"EX-001\",\n  \"price\": 100.5,\n  \"category_id\": 1,\n  \"supplier_id\": 1,\n  \"is_active\": true\n}" },
+            "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated product\",\n  \"price\": 120.0\n}" },
+            "url": { "raw": "{{base_url}}/api/products/:id", "host": ["{{base_url}}"], "path": ["api", "products", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/:id", "host": ["{{base_url}}"], "path": ["api", "products", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Upload Product Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "formdata", "formdata": [ { "key": "image", "type": "file" } ] },
+            "url": { "raw": "{{base_url}}/api/products/upload", "host": ["{{base_url}}"], "path": ["api", "products", "upload"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Import Products (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "formdata", "formdata": [ { "key": "file", "type": "file" } ] },
+            "url": { "raw": "{{base_url}}/api/products/import", "host": ["{{base_url}}"], "path": ["api", "products", "import"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/categories", "host": ["{{base_url}}"], "path": ["api", "categories"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Get Category",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/categories/:id", "host": ["{{base_url}}"], "path": ["api", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Create Category",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Example category\",\n  \"is_active\": true\n}" }, "url": { "raw": "{{base_url}}/api/categories", "host": ["{{base_url}}"], "path": ["api", "categories"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Update Category",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated category\"\n}" }, "url": { "raw": "{{base_url}}/api/categories/:id", "host": ["{{base_url}}"], "path": ["api", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Delete Category",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/api/categories/:id", "host": ["{{base_url}}"], "path": ["api", "categories", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "List Suppliers",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/suppliers", "host": ["{{base_url}}"], "path": ["api", "suppliers"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Get Supplier",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/suppliers/:id", "host": ["{{base_url}}"], "path": ["api", "suppliers", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Create Supplier",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Example supplier\",\n  \"email\": \"supplier@example.com\",\n  \"is_active\": true\n}" }, "url": { "raw": "{{base_url}}/api/suppliers", "host": ["{{base_url}}"], "path": ["api", "suppliers"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Update Supplier",
+          "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated supplier\"\n}" }, "url": { "raw": "{{base_url}}/api/suppliers/:id", "host": ["{{base_url}}"], "path": ["api", "suppliers", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        },
+        {
+          "name": "Delete Supplier",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/api/suppliers/:id", "host": ["{{base_url}}"], "path": ["api", "suppliers", ":id"], "variable": [{ "key": "id", "value": "" }] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        }
+      ]
+    },
+    {
+      "name": "ChangeLogs",
+      "item": [
+        {
+          "name": "List ChangeLogs",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/changes", "host": ["{{base_url}}"], "path": ["api", "changes"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+        }
+      ]
+    }
+  ]
+}
