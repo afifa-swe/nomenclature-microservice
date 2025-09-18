@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Jobs\ImportProductsJob;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -137,5 +139,28 @@ class ProductController extends Controller
         $url = Storage::disk('s3')->url($path);
 
         return $this->ok('Изображение успешно загружено', ['file_url' => $url]);
+    }
+
+    public function import(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|mimes:csv,txt|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'data' => $validator->errors()->messages(),
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 422);
+        }
+
+        $file = $request->file('file');
+        $path = $file->store('imports');
+
+        ImportProductsJob::dispatch($path);
+
+        return $this->ok('Импорт запущен', null);
     }
 }
