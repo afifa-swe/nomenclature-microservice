@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -113,5 +115,27 @@ class ProductController extends Controller
         $product->save();
 
         return $this->ok('Soft-deleted', null);
+    }
+
+    public function upload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'data' => $validator->errors()->messages(),
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 422);
+        }
+
+        $file = $request->file('image');
+        $path = Storage::disk('s3')->putFile('products', $file);
+        $url = Storage::disk('s3')->url($path);
+
+        return $this->ok('Изображение успешно загружено', ['file_url' => $url]);
     }
 }
