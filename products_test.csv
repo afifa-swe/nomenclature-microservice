@@ -1,0 +1,4 @@
+name,sku,price,category_id,supplier_id,is_active
+"Тестовый продукт 1","SKU-001",100.5,"d52e26a5-ffa7-48d0-bd86-a43e506e14a3","7f98b2f5-5901-4176-ad88-dedf913d43ff",true
+"Тестовый продукт 2","SKU-002",250.0,"d52e26a5-ffa7-48d0-bd86-a43e506e14a3","7f98b2f5-5901-4176-ad88-dedf913d43ff",true
+"Тестовый продукт 3","SKU-003",75.9,"d52e26a5-ffa7-48d0-bd86-a43e506e14a3","7f98b2f5-5901-4176-ad88-dedf913d43ff",false

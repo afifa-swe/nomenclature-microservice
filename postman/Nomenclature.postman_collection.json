@@ -17,6 +17,38 @@
   },
   "item": [
     {
+      "name": "token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"grant_type\": \"password\",\n  \"client_id\": \"{{client_id}}\",\n  \"client_secret\": \"{{client_secret}}\",\n  \"username\": \"admin@example.com\",\n  \"password\": \"password\",\n  \"scope\": \"*\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/oauth/token",
+          "host": ["{{base_url}}"],
+          "path": ["oauth", "token"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Token получен\", function () {",
+              "  var jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.have.property(\"access_token\");",
+              "  pm.environment.set(\"token\", jsonData.access_token);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "Products",
       "item": [
         {
@@ -46,11 +78,35 @@
           "name": "Create Product",
           "request": {
             "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Example product\",\n  \"sku\": \"EX-001\",\n  \"price\": 100.5,\n  \"category_id\": 1,\n  \"supplier_id\": 1,\n  \"is_active\": true\n}" },
-            "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] }
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Example product\",\n  \"sku\": \"EX-001\",\n  \"price\": 100.5,\n  \"category_id\": \"d52e26a5-ffa7-48d0-bd86-a43e506e14a3\",\n  \"supplier_id\": \"7f98b2f5-5901-4176-ad88-dedf913d43ff\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
           },
-          "event": [{ "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});"] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Формат ответа корректен\", function () {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Update Product",

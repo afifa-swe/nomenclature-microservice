@@ -11,6 +11,10 @@ class Category extends Model
 {
     use HasUuid, HasFactory,LogsChanges;
 
+    // ensure UUID primary key handling
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'name',
         'parent_id',

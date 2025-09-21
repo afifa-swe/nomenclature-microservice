@@ -5,12 +5,14 @@ RUN apt-get update && apt-get install -y \
     libonig-dev libxml2-dev gnupg && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
- && docker-php-ext-install pdo pdo_pgsql zip gd bcmath exif pcntl
+ && docker-php-ext-install pdo pdo_pgsql zip gd bcmath exif pcntl sockets
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
 RUN usermod -u 1000 www-data || true
+
+COPY docker/php.ini /usr/local/etc/php/conf.d/custom-php.ini
 
 CMD ["php-fpm"]

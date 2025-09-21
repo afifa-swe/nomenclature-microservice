@@ -9,6 +9,10 @@ class ChangeLog extends Model
 {
     use HasUuid;
 
+    // ensure UUID primary key handling
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
         'user_id',
         'entity_type',

@@ -121,22 +121,81 @@ class ProductController extends Controller
 
     public function upload(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'image' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        // validate incoming file (up to 5MB)
+        $request->validate([
+            'image' => 'required|file|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        if ($validator->fails()) {
+        // debug logging to ensure file arrives
+        Log::info('Upload debug (start)', [
+            'hasFile' => $request->hasFile('image'),
+        ]);
+
+        if (! $request->hasFile('image')) {
+            Log::warning('Upload failed: no file in request');
             return response()->json([
-                'message' => 'Ошибка валидации',
-                'data' => $validator->errors()->messages(),
+                'message' => 'Файл не пришёл',
+                'data' => null,
                 'timestamp' => now()->toISOString(),
                 'success' => false,
             ], 422);
         }
 
         $file = $request->file('image');
-        $path = Storage::disk('s3')->putFile('products', $file);
-        $url = Storage::disk('s3')->url($path);
+
+        // Log file details for debugging
+        Log::info('Upload debug file', [
+            'originalName' => $file->getClientOriginalName(),
+            'clientMimeType' => $file->getClientMimeType(),
+            'size' => $file->getSize(),
+            'path' => $file->getPathname(),
+            'isValid' => $file->isValid(),
+        ]);
+
+        if (! $file->isValid()) {
+            Log::warning('Upload failed: uploaded file is not valid');
+            return response()->json([
+                'message' => 'Файл неверный',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 422);
+        }
+
+        try {
+            $path = Storage::disk('s3')->putFile('products', $file);
+            Log::info('S3 putFile result', ['path' => $path]);
+
+            if (empty($path)) {
+                Log::error('S3 returned empty path');
+                return response()->json([
+                    'message' => 'Ошибка загрузки: пустой путь',
+                    'data' => null,
+                    'timestamp' => now()->toISOString(),
+                    'success' => false,
+                ], 500);
+            }
+
+            try {
+                $url = Storage::disk('s3')->url($path);
+            } catch (\Exception $e) {
+                Log::error('Error building S3 url: '.$e->getMessage(), ['path' => $path]);
+                return response()->json([
+                    'message' => 'Ошибка формирования URL',
+                    'data' => null,
+                    'timestamp' => now()->toISOString(),
+                    'success' => false,
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('MinIO upload failed: '.$e->getMessage());
+            return response()->json([
+                'message' => 'MinIO недоступен',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 503);
+        }
 
         return $this->ok('Изображение успешно загружено', ['file_url' => $url]);
     }
