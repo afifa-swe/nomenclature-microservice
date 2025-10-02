@@ -33,7 +33,7 @@ class ProductController extends Controller
         if ($perPage <= 0) $perPage = 15;
         $perPage = min($perPage, 100);
 
-        $query = Product::query();
+    $query = Product::where('created_by', auth()->id());
 
         if ($request->has('category_id')) {
             $query->where('category_id', $request->query('category_id'));
@@ -65,6 +65,15 @@ class ProductController extends Controller
             ], 404);
         }
 
+    if ((string) $product->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         return $this->ok('Product retrieved', $product);
     }
 
@@ -74,14 +83,15 @@ class ProductController extends Controller
             'name', 'description', 'category_id', 'supplier_id', 'price', 'file_url', 'is_active'
         ]);
 
-        $product = Product::create($data);
+    $product = Product::create($data);
+    // created_by будет установлен трейтoм AutoOwners
 
         return $this->ok('Product created', $product, 201);
     }
 
     public function update(UpdateProductRequest $request, $id)
     {
-        $product = Product::find($id);
+    $product = Product::find($id);
         if (!$product) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -95,6 +105,15 @@ class ProductController extends Controller
             'name', 'description', 'category_id', 'supplier_id', 'price', 'file_url', 'is_active'
         ]);
 
+    if ((string) $product->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         $product->fill($data);
         $product->save();
 
@@ -103,7 +122,7 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        $product = Product::withoutGlobalScopes()->find($id);
+    $product = Product::withoutGlobalScopes()->find($id);
         if (!$product) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -111,6 +130,15 @@ class ProductController extends Controller
                 'timestamp' => now()->toISOString(),
                 'success' => false,
             ], 404);
+        }
+
+    if ((string) $product->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
         }
 
         $product->is_active = false;

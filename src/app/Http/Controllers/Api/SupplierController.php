@@ -28,7 +28,7 @@ class SupplierController extends Controller
         if ($perPage <= 0) $perPage = 15;
         $perPage = min($perPage, 100);
 
-        $query = Supplier::query();
+    $query = Supplier::where('created_by', auth()->id());
 
         if ($request->has('search')) {
             $q = $request->query('search');
@@ -55,20 +55,29 @@ class SupplierController extends Controller
             ], 404);
         }
 
+    if ((string) $supplier->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         return $this->ok('Supplier retrieved', $supplier);
     }
 
     public function store(StoreSupplierRequest $request)
     {
         $data = $request->only(['name','phone','contact_name','website','description','email','is_active']);
-        $supplier = Supplier::create($data);
+    $supplier = Supplier::create($data);
 
         return $this->ok('Supplier created', $supplier, 201);
     }
 
     public function update(UpdateSupplierRequest $request, $id)
     {
-        $supplier = Supplier::find($id);
+    $supplier = Supplier::find($id);
         if (!$supplier) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -79,6 +88,15 @@ class SupplierController extends Controller
         }
 
         $data = $request->only(['name','phone','contact_name','website','description','email','is_active']);
+    if ((string) $supplier->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         $supplier->fill($data);
         $supplier->save();
 
@@ -87,7 +105,7 @@ class SupplierController extends Controller
 
     public function destroy($id)
     {
-        $supplier = Supplier::find($id);
+    $supplier = Supplier::find($id);
         if (!$supplier) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -95,6 +113,15 @@ class SupplierController extends Controller
                 'timestamp' => now()->toISOString(),
                 'success' => false,
             ], 404);
+        }
+
+    if ((string) $supplier->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
         }
 
         $supplier->delete();

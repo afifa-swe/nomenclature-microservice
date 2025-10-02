@@ -28,7 +28,7 @@ class CategoryController extends Controller
         if ($perPage <= 0) $perPage = 15;
         $perPage = min($perPage, 100);
 
-        $query = Category::query();
+    $query = Category::where('created_by', auth()->id());
 
         if ($request->has('parent_id')) {
             $query->where('parent_id', $request->query('parent_id'));
@@ -56,20 +56,29 @@ class CategoryController extends Controller
             ], 404);
         }
 
+    if ((string) $category->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         return $this->ok('Category retrieved', $category);
     }
 
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->only(['name', 'parent_id']);
-        $category = Category::create($data);
+    $category = Category::create($data);
 
         return $this->ok('Category created', $category, 201);
     }
 
     public function update(UpdateCategoryRequest $request, $id)
     {
-        $category = Category::find($id);
+    $category = Category::find($id);
         if (!$category) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -80,6 +89,15 @@ class CategoryController extends Controller
         }
 
         $data = $request->only(['name', 'parent_id']);
+    if ((string) $category->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
+        }
+
         $category->fill($data);
         $category->save();
 
@@ -88,7 +106,7 @@ class CategoryController extends Controller
 
     public function destroy($id)
     {
-        $category = Category::find($id);
+    $category = Category::find($id);
         if (!$category) {
             return response()->json([
                 'message' => 'Не найдено',
@@ -96,6 +114,15 @@ class CategoryController extends Controller
                 'timestamp' => now()->toISOString(),
                 'success' => false,
             ], 404);
+        }
+
+    if ((string) $category->created_by !== (string) auth()->id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+                'data' => null,
+                'timestamp' => now()->toISOString(),
+                'success' => false,
+            ], 403);
         }
 
         $category->delete();

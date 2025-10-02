@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class StoreProductRequest extends FormRequest
 {
@@ -18,8 +19,20 @@ class StoreProductRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category_id' => 'required|uuid|exists:categories,id',
-            'supplier_id' => 'required|uuid|exists:suppliers,id',
+            'category_id' => [
+                'required',
+                'uuid',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    $query->where('created_by', auth()->id());
+                }),
+            ],
+            'supplier_id' => [
+                'required',
+                'uuid',
+                Rule::exists('suppliers', 'id')->where(function ($query) {
+                    $query->where('created_by', auth()->id());
+                }),
+            ],
             'price' => 'required|numeric|min:0',
             'file_url' => 'nullable|url',
             'is_active' => 'sometimes|boolean',

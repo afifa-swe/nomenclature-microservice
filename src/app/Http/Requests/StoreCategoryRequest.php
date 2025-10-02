@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class StoreCategoryRequest extends FormRequest
 {
@@ -17,7 +18,13 @@ class StoreCategoryRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|uuid|exists:categories,id',
+            'parent_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('categories', 'id')->where(function ($query) {
+                    $query->where('created_by', auth()->id());
+                }),
+            ],
         ];
     }
 

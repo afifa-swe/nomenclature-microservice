@@ -38,6 +38,9 @@ class ChangeLogController extends Controller
 
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->query('user_id'));
+        } else {
+            // по умолчанию показываем только для текущего пользователя
+            $query->where('user_id', auth()->id());
         }
 
         $sort = $request->query('sort', 'desc');
