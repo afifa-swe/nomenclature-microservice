@@ -3,14 +3,15 @@
 namespace App\Jobs;
 
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\Supplier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\ToArray;
+// Removed maatwebsite/excel usage: we'll use native fgetcsv to read all rows reliably
 
 class ImportProductsJob implements ShouldQueue
 {
@@ -27,87 +28,86 @@ class ImportProductsJob implements ShouldQueue
 
     public function handle()
     {
-        try {
-            $fullPath = storage_path('app/' . $this->path);
+        $fullPath = storage_path('app/' . $this->path);
+        Log::info('ImportProductsJob: start', ['path' => $this->path, 'fullPath' => $fullPath, 'exists' => file_exists($fullPath)]);
 
-            $import = new class implements ToArray {
-                public function array(array $array)
-                {
-                    return $array;
-                }
-            };
-
-            try {
-                // Try with explicit CSV reader type so extension detection is not required
-                $sheets = Excel::toArray($import, $fullPath, null, \Maatwebsite\Excel\Excel::CSV);
-                $rows = $sheets[0] ?? [];
-            } catch (\Throwable $e) {
-                Log::warning('ImportProductsJob: Excel read failed, falling back to native CSV parser - ' . $e->getMessage());
-                $rows = [];
-                if (($h = fopen($fullPath, 'r')) !== false) {
-                    while (($data = fgetcsv($h)) !== false) {
-                        $rows[] = $data;
-                    }
-                    fclose($h);
-                } else {
-                    throw $e; // rethrow if file can't be opened
-                }
-            }
-
-            if (count($rows) === 0) {
-                Log::info('ImportProductsJob: CSV is empty - ' . $this->path);
-                return;
-            }
-
-            // Assume first row is header
-            $headerRow = array_map(function ($h) {
-                return mb_strtolower(trim($h));
-            }, $rows[0]);
-
-            $dataRows = array_slice($rows, 1);
-
-            $chunks = array_chunk($dataRows, 100);
-
-            foreach ($chunks as $chunk) {
-                foreach ($chunk as $row) {
-                    try {
-                        // Map row values to header keys
-                        if (count($headerRow) !== count($row)) {
-                            // Try to pad row to header length
-                            $row = array_pad($row, count($headerRow), null);
-                        }
-
-                        $assoc = array_combine($headerRow, $row);
-                        if ($assoc === false) {
-                            continue;
-                        }
-
-                        $name = $assoc['name'] ?? null;
-                        if (empty($name)) {
-                            // skip rows without name
-                            continue;
-                        }
-
-                        Product::create([
-                            'name' => $name,
-                            'description' => $assoc['description'] ?? null,
-                            'category_id' => $assoc['category_id'] ?? null,
-                            'supplier_id' => $assoc['supplier_id'] ?? null,
-                            'price' => isset($assoc['price']) ? (float)$assoc['price'] : 0,
-                            'file_url' => null,
-                            'is_active' => true,
-                            'created_by' => $this->userId,
-                        ]);
-                    } catch (\Throwable $e) {
-                        Log::error('ImportProductsJob: row import error - ' . $e->getMessage(), ['exception' => $e]);
-                        continue;
-                    }
-                }
-            }
-
-            Log::info('ImportProductsJob: completed import - ' . $this->path);
-        } catch (\Throwable $e) {
-            Log::error('ImportProductsJob: failed - ' . $e->getMessage(), ['exception' => $e]);
+        // Read entire CSV via native fgetcsv to avoid Excel::toArray inconsistencies
+        $rows = [];
+        if (! file_exists($fullPath) || ! is_readable($fullPath)) {
+            Log::error('ImportProductsJob: file missing or not readable', ['fullPath' => $fullPath]);
+            return;
         }
+
+        if (($handle = fopen($fullPath, 'r')) === false) {
+            Log::error('ImportProductsJob: cannot open file for reading', ['fullPath' => $fullPath]);
+            return;
+        }
+
+        while (($data = fgetcsv($handle)) !== false) {
+            $rows[] = $data;
+        }
+        fclose($handle);
+
+        Log::info('ImportProductsJob: read (fgetcsv)', ['rows' => count($rows)]);
+
+        if (empty($rows)) {
+            Log::info('ImportProductsJob: no rows found', ['path' => $this->path]);
+            return;
+        }
+
+        // header and normalization
+        $rawHeader = $rows[0];
+        $headerRow = array_map(fn($h) => mb_strtolower(trim((string)$h)), $rawHeader);
+        Log::info('ImportProductsJob: header', ['header' => $headerRow]);
+
+    $dataRows = array_slice($rows, 1);
+    $total = count($dataRows);
+    $created = 0;
+        foreach ($dataRows as $i => $row) {
+            try {
+                if (count($headerRow) !== count($row)) $row = array_pad($row, count($headerRow), null);
+                $assoc = @array_combine($headerRow, $row);
+                if ($assoc === false || $assoc === null) {
+                    Log::warning('ImportProductsJob: array_combine failed', ['index' => $i, 'row' => $row]);
+                    continue;
+                }
+
+                $name = $assoc['name'] ?? null;
+                if (empty($name)) { Log::warning('ImportProductsJob: skipping empty name', ['index'=>$i]); continue; }
+
+                $categoryId = $assoc['category_id'] ?? null;
+                $supplierId = $assoc['supplier_id'] ?? null;
+
+                $isUuid = fn($v) => !empty($v) && preg_match('/^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/', $v);
+
+                if (! $isUuid($categoryId)) {
+                    $existing = Category::first();
+                    $categoryId = $existing ? $existing->id : Category::create(['name'=>'Imported default'])->id;
+                }
+                if (! $isUuid($supplierId)) {
+                    $existing = Supplier::first();
+                    $supplierId = $existing ? $existing->id : Supplier::create(['name'=>'Imported default'])->id;
+                }
+
+                // create product record (one product per CSV row)
+                Product::create([
+                    'name' => $name,
+                    'description' => $assoc['description'] ?? null,
+                    'category_id' => $categoryId,
+                    'supplier_id' => $supplierId,
+                    'price' => isset($assoc['price']) ? (float)$assoc['price'] : 0,
+                    'file_url' => $assoc['file_url'] ?? null,
+                    'is_active' => true,
+                    'created_by' => $this->userId !== null ? (string)$this->userId : null,
+                ]);
+
+                $created++;
+            } catch (\Throwable $e) {
+                Log::error('ImportProductsJob: failed row', ['index'=>$i,'error'=>$e->getMessage()]);
+                continue;
+            }
+        }
+
+        Log::info('ImportProductsJob: done', ['path'=>$this->path, 'total'=>$total, 'created'=>$created]);
     }
 }
