@@ -79,6 +79,28 @@ services:
     volumes:
       - minio-data:/data
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nomenclature_worker
+    volumes:
+      - ./:/var/www/html
+      - ./docker/supervisor:/etc/supervisor/conf.d:ro
+    depends_on:
+      - rabbitmq
+      - db
+    # run supervisord in foreground so it manages the worker process and auto-restarts on failure
+    command: 'sh -c "exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf"'
+    environment:
+      PHP_MEMORY_LIMIT: 512M
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "php -v >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
 volumes:
   db-data:
   rabbitmq-data:
