@@ -204,16 +204,32 @@ class ProductController extends Controller
                 ], 500);
             }
 
+            // try to build a public URL; if driver can't, fallback to endpoint + bucket + path
+            $url = null;
             try {
                 $url = Storage::disk('s3')->url($path);
             } catch (\Exception $e) {
-                Log::error('Error building S3 url: '.$e->getMessage(), ['path' => $path]);
-                return response()->json([
-                    'message' => 'Ошибка формирования URL',
-                    'data' => null,
-                    'timestamp' => now()->toISOString(),
-                    'success' => false,
-                ], 500);
+                Log::warning('Storage::url failed, will attempt manual URL build: '.$e->getMessage());
+            }
+
+            if (empty($url)) {
+                $s3Config = config('filesystems.disks.s3');
+                $endpoint = $s3Config['endpoint'] ?? env('AWS_ENDPOINT');
+                $bucket = $s3Config['bucket'] ?? env('AWS_BUCKET');
+                if ($endpoint) {
+                    // ensure no double slashes
+                    $base = rtrim($endpoint, '/');
+                    // If endpoint already contains host that serves buckets as path, build accordingly
+                    $url = $base . '/' . ltrim($path, '/');
+                } else {
+                    Log::error('No endpoint configured to build S3 URL');
+                    return response()->json([
+                        'message' => 'Ошибка формирования URL',
+                        'data' => null,
+                        'timestamp' => now()->toISOString(),
+                        'success' => false,
+                    ], 500);
+                }
             }
         } catch (\Exception $e) {
             Log::error('MinIO upload failed: '.$e->getMessage());
