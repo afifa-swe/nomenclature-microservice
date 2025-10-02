@@ -17,10 +17,12 @@ class ImportProductsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected string $path;
+    protected $userId;
 
-    public function __construct(string $path)
+    public function __construct(string $path, $userId = null)
     {
         $this->path = $path;
+        $this->userId = $userId;
     }
 
     public function handle()
@@ -35,8 +37,22 @@ class ImportProductsJob implements ShouldQueue
                 }
             };
 
-            $sheets = Excel::toArray($import, $fullPath);
-            $rows = $sheets[0] ?? [];
+            try {
+                // Try with explicit CSV reader type so extension detection is not required
+                $sheets = Excel::toArray($import, $fullPath, null, \Maatwebsite\Excel\Excel::CSV);
+                $rows = $sheets[0] ?? [];
+            } catch (\Throwable $e) {
+                Log::warning('ImportProductsJob: Excel read failed, falling back to native CSV parser - ' . $e->getMessage());
+                $rows = [];
+                if (($h = fopen($fullPath, 'r')) !== false) {
+                    while (($data = fgetcsv($h)) !== false) {
+                        $rows[] = $data;
+                    }
+                    fclose($h);
+                } else {
+                    throw $e; // rethrow if file can't be opened
+                }
+            }
 
             if (count($rows) === 0) {
                 Log::info('ImportProductsJob: CSV is empty - ' . $this->path);
@@ -80,6 +96,7 @@ class ImportProductsJob implements ShouldQueue
                             'price' => isset($assoc['price']) ? (float)$assoc['price'] : 0,
                             'file_url' => null,
                             'is_active' => true,
+                            'created_by' => $this->userId,
                         ]);
                     } catch (\Throwable $e) {
                         Log::error('ImportProductsJob: row import error - ' . $e->getMessage(), ['exception' => $e]);

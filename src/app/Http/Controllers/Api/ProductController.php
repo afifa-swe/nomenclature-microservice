@@ -243,10 +243,24 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $file = $request->file('file');
-        $path = $file->store('imports');
+    $file = $request->file('file');
 
-        ImportProductsJob::dispatch($path);
+    // Preserve extension so the Excel reader can detect CSV type
+        $originalName = $file->getClientOriginalName();
+        $safeName = time() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $originalName);
+
+        // Ensure local imports directory exists under storage/app/imports
+        $importsDir = storage_path('app/imports');
+        if (!is_dir($importsDir)) {
+            mkdir($importsDir, 0755, true);
+        }
+
+        // Move uploaded file to local storage so the background job can read it via storage_path
+        $file->move($importsDir, $safeName);
+        $path = 'imports/' . $safeName;
+
+    // Dispatch job with the path and current user id so imported products are owned by the importer
+    ImportProductsJob::dispatch($path, auth()->id());
 
         return $this->ok('Импорт запущен', null);
     }
