@@ -29,9 +29,13 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = (int) $request->query('per_page', 15);
-        if ($perPage <= 0) $perPage = 15;
-        $perPage = min($perPage, 100);
+        $perPage = (int) $request->query('per_page', 100);
+        if ($perPage < 1) {
+            $perPage = 1;
+        }
+        if ($perPage > 100) {
+            $perPage = 100;
+        }
 
     $query = Product::where('created_by', auth()->id());
 
@@ -84,7 +88,6 @@ class ProductController extends Controller
         ]);
 
     $product = Product::create($data);
-    // created_by будет установлен трейтoм AutoOwners
 
         return $this->ok('Product created', $product, 201);
     }
@@ -204,7 +207,6 @@ class ProductController extends Controller
                 ], 500);
             }
 
-            // try to build a public URL; if driver can't, fallback to endpoint + bucket + path
             $url = null;
             try {
                 $url = Storage::disk('s3')->url($path);
@@ -244,40 +246,56 @@ class ProductController extends Controller
         return $this->ok('Изображение успешно загружено', ['file_url' => $url]);
     }
 
-    public function import(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:csv,txt|max:5120',
-        ]);
+public function import(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'file' => 'required|mimes:csv,txt|max:5120',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Ошибка валидации',
-                'data' => $validator->errors()->messages(),
-                'timestamp' => now()->toISOString(),
-                'success' => false,
-            ], 422);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Ошибка валидации',
+            'data' => $validator->errors()->messages(),
+            'timestamp' => now()->toISOString(),
+            'success' => false,
+        ], 422);
+    }
 
     $file = $request->file('file');
+    $rows = array_map('str_getcsv', file($file->getRealPath()));
 
-    // Preserve extension so the Excel reader can detect CSV type
-        $originalName = $file->getClientOriginalName();
-        $safeName = time() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $originalName);
+    $header = array_map(fn($h) => mb_strtolower(trim($h)), $rows[0]);
+    $dataRows = array_slice($rows, 1);
 
-        // Ensure local imports directory exists under storage/app/imports
-        $importsDir = storage_path('app/imports');
-        if (!is_dir($importsDir)) {
-            mkdir($importsDir, 0755, true);
+    $assocRows = [];
+    foreach ($dataRows as $row) {
+        $row = array_pad($row, count($header), null);
+        $assoc = @array_combine($header, $row);
+        if (!empty($assoc['name'])) {
+            $assocRows[] = $assoc;
         }
-
-        // Move uploaded file to local storage so the background job can read it via storage_path
-        $file->move($importsDir, $safeName);
-        $path = 'imports/' . $safeName;
-
-    // Dispatch job with the path and current user id so imported products are owned by the importer
-    ImportProductsJob::dispatch($path, auth()->id());
-
-        return $this->ok('Импорт запущен', null);
     }
+
+    $chunks = array_chunk($assocRows, 10);
+
+    foreach ($chunks as $i => $chunk) {
+        ImportProductsJob::dispatch($chunk, auth()->id())
+            ->onConnection('rabbitmq')
+            ->onQueue('imports');
+
+        Log::info('Dispatched chunk', ['index' => $i, 'rows' => count($chunk)]);
+    }
+
+    return response()->json([
+        'message' => 'Импорт запущен',
+        'data' => [
+            'total_rows' => count($assocRows),
+            'chunks' => count($chunks),
+            'chunk_size' => 10
+        ],
+        'timestamp' => now()->toISOString(),
+        'success' => true,
+    ]);
+}
+
 }
