@@ -87,9 +87,50 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] }
+            "url": {
+              "raw": "{{base_url}}/api/products?per_page=25&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "25",
+                  "description": "Items per page (default 25, max 100)",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default 1)",
+                  "disabled": false
+                }
+              ]
+            }
           },
-          "event": [ { "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});" ] } } ]
+          "event": [ { "listen": "test", "script": { "exec": ["pm.test(\"Формат ответа корректен\", function () {", "  const res = pm.response.json();", "  pm.expect(res).to.have.keys(['message', 'data', 'timestamp', 'success']);", "});" ] } } ],
+          "response": [
+            {
+              "name": "Example - List Products",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/products?per_page=25&page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "products"],
+                  "query": [
+                    { "key": "per_page", "value": "25" },
+                    { "key": "page", "value": "1" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [ { "key": "Content-Type", "value": "application/json" } ],
+              "body": "{\n  \"message\": \"Products list\",\n  \"data\": {\n    \"page\": 1,\n    \"per_page\": 25,\n    \"total\": 4600,\n    \"items\": []\n  },\n  \"timestamp\": \"2025-10-03T10:33:40.754954Z\",\n  \"success\": true\n}"
+            }
+          ]
         },
         {
           "name": "Get Product",
