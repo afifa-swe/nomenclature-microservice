@@ -20,14 +20,7 @@ class ProductFeatureTest extends TestCase
 
     protected function setUp(): void
     {
-        // Ensure tests run against PostgreSQL (must be set before RefreshDatabase/bootstrap)
-        putenv('DB_CONNECTION=pgsql');
-        putenv('DB_HOST=127.0.0.1');
-        putenv('DB_DATABASE=app');
-        putenv('DB_USERNAME=app');
-        putenv('DB_PASSWORD=app');
-
-    parent::setUp();
+        parent::setUp();
         try {
             \Illuminate\Support\Facades\DB::table('oauth_clients')->insert([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
@@ -47,7 +40,6 @@ class ProductFeatureTest extends TestCase
         }
     }
 
-    /** @group feature */
     public function test_crud_products()
     {
     $user = User::factory()->create();
@@ -73,7 +65,6 @@ class ProductFeatureTest extends TestCase
         $del->assertStatus(200)->assertJson(['success' => true])->assertJsonFragment(['message' => 'Soft-deleted']);
     }
 
-    /** @group feature */
     public function test_import_csv_dispatches_jobs_and_logs()
     {
         Storage::fake('local');
@@ -83,11 +74,9 @@ class ProductFeatureTest extends TestCase
     $user = User::factory()->create();
     $this->actingAs($user, 'api');
 
-        // create categories and suppliers to allow factory relationships if needed
         Category::factory()->count(3)->create();
         Supplier::factory()->count(3)->create();
 
-        // create temp CSV with 20 valid rows
         $rows = [];
         $header = ['name','description','price','category_id','supplier_id'];
         $rows[] = implode(',', $header);

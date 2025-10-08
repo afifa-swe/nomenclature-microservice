@@ -13,14 +13,7 @@ class ChangeLogFeatureTest extends TestCase
 
     protected function setUp(): void
     {
-        // Ensure tests run against PostgreSQL (must be set before RefreshDatabase/bootstrap)
-        putenv('DB_CONNECTION=pgsql');
-        putenv('DB_HOST=127.0.0.1');
-        putenv('DB_DATABASE=app');
-        putenv('DB_USERNAME=app');
-        putenv('DB_PASSWORD=app');
-
-    parent::setUp();
+        parent::setUp();
         try {
             \Illuminate\Support\Facades\DB::table('oauth_clients')->insert([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
@@ -40,13 +33,11 @@ class ChangeLogFeatureTest extends TestCase
         }
     }
 
-    /** @group feature */
     public function test_index_and_records_in_changelog()
     {
     $user = User::factory()->create();
     $this->actingAs($user, 'api');
 
-        // insert a change log row
         DB::table('change_logs')->insert([
             'id' => (string) \Illuminate\Support\Str::uuid(),
             'entity_type' => 'product',
