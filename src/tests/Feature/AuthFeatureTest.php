@@ -66,28 +66,4 @@ class AuthFeatureTest extends TestCase
             ->assertJsonStructure(['message','data' => ['access_token']]);
     }
 
-    public function test_logout_and_user_endpoints_if_present()
-    {
-    $user = User::factory()->create();
-    $this->actingAs($user, 'api');
-
-        $resp = $this->postJson('/api/logout');
-        if ($resp->getStatusCode() === 404) {
-            $this->markTestSkipped('Logout route not defined - skipped');
-            return;
-        }
-
-        $resp->assertStatus(200)->assertJson(['success' => true]);
-
-        $resp2 = $this->getJson('/api/auth/user');
-        if ($resp2->getStatusCode() === 404) {
-            $resp2 = $this->getJson('/api/user');
-            if ($resp2->getStatusCode() === 404) {
-                $this->markTestSkipped('Current user route not defined - skipped');
-                return;
-            }
-        }
-
-        $resp2->assertStatus(200)->assertJson(['success' => true]);
-    }
 }

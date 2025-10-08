@@ -3,7 +3,6 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-// migrations are handled by RefreshDatabase in tests
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
