@@ -71,7 +71,7 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->only(['name', 'parent_id']);
-    $category = Category::create($data);
+        $category = Category::create($data);
 
         return $this->ok('Category created', $category, 201);
     }

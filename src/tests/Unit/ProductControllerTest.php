@@ -27,7 +27,6 @@ class ProductControllerTest extends TestCase
         $perPage = 25;
         $request = new Request(['per_page' => $perPage]);
 
-        // Mock Product::where(...)->paginate(...)->appends(...)
         $queryMock = Mockery::mock();
         $paginatorMock = Mockery::mock();
         $paginatorMock->shouldReceive('appends')->with($request->query())->andReturn('PAGINATED_RESULT');
@@ -53,16 +52,16 @@ class ProductControllerTest extends TestCase
         $productFacade = Mockery::mock('alias:App\\Models\\Product');
         $productFacade->shouldReceive('create')->once()->andReturn($productMock);
 
-    $controller = new ProductController();
-    $request = new StoreProductRequest();
-    $request->merge(['name' => 'Test Product', 'price' => 10, 'category_id' => '00000000-0000-0000-0000-000000000000', 'supplier_id' => '00000000-0000-0000-0000-000000000000']);
-    $response = $controller->store($request);
+        $controller = new ProductController();
+        $request = new StoreProductRequest();
+        $request->merge(['name' => 'Test Product', 'price' => 10, 'category_id' => '00000000-0000-0000-0000-000000000000', 'supplier_id' => '00000000-0000-0000-0000-000000000000']);
+        $response = $controller->store($request);
 
         $this->assertEquals(201, $response->getStatusCode());
         $payload = $response->getData(true);
         $this->assertEquals('Product created', $payload['message']);
-    $this->assertEquals('uuid', $payload['data']['id']);
-    $this->assertEquals('Test Product', $payload['data']['name']);
+        $this->assertEquals('uuid', $payload['data']['id']);
+        $this->assertEquals('Test Product', $payload['data']['name']);
         $this->assertTrue($payload['success']);
     }
 
@@ -81,10 +80,10 @@ class ProductControllerTest extends TestCase
         $productFacade = Mockery::mock('alias:App\\Models\\Product');
         $productFacade->shouldReceive('find')->with($id)->andReturn($productMock);
 
-    $controller = new ProductController();
-    $request = new UpdateProductRequest();
-    $request->merge($data);
-    $response = $controller->update($request, $id);
+        $controller = new ProductController();
+        $request = new UpdateProductRequest();
+        $request->merge($data);
+        $response = $controller->update($request, $id);
 
         $this->assertEquals(200, $response->getStatusCode());
         $payload = $response->getData(true);
@@ -123,7 +122,6 @@ class ProductControllerTest extends TestCase
     {
         Auth::shouldReceive('id')->andReturn('user-1');
 
-        // create temp csv with header and 23 rows, some empty
         $tmp = tmpfile();
         $meta = stream_get_meta_data($tmp);
         $path = $meta['uri'];

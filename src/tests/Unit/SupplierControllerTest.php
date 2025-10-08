@@ -27,8 +27,8 @@ class SupplierControllerTest extends TestCase
         $facade = Mockery::mock('alias:App\\Models\\Supplier');
         $facade->shouldReceive('where')->andReturn($query);
 
-    $controller = new \App\Http\Controllers\Api\SupplierController();
-    $response = $controller->index($request);
+        $controller = new \App\Http\Controllers\Api\SupplierController();
+        $response = $controller->index($request);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertTrue($response->getData(true)['success']);
@@ -39,10 +39,10 @@ class SupplierControllerTest extends TestCase
         $mock = Mockery::mock('alias:App\\Models\\Supplier');
         $mock->shouldReceive('create')->once()->andReturn((object)['id' => 'uuid', 'title' => 'Test Supplier']);
 
-    $controller = new \App\Http\Controllers\Api\SupplierController();
-    $request = new \App\Http\Requests\StoreSupplierRequest();
-    $request->merge(['name' => 'Test Supplier']);
-    $response = $controller->store($request);
+        $controller = new \App\Http\Controllers\Api\SupplierController();
+        $request = new \App\Http\Requests\StoreSupplierRequest();
+        $request->merge(['name' => 'Test Supplier']);
+        $response = $controller->store($request);
 
         $this->assertEquals(201, $response->getStatusCode());
         $payload = $response->getData(true);
@@ -54,21 +54,21 @@ class SupplierControllerTest extends TestCase
     {
         Auth::shouldReceive('id')->andReturn('user-1');
 
-    $id = 'sup-1';
-    $data = ['name' => 'Updated'];
+        $id = 'sup-1';
+        $data = ['name' => 'Updated'];
 
-    $model = Mockery::mock();
-    $model->created_by = 'user-1';
-    $model->shouldReceive('fill')->once()->with($data);
-    $model->shouldReceive('save')->once()->andReturnTrue();
+        $model = Mockery::mock();
+        $model->created_by = 'user-1';
+        $model->shouldReceive('fill')->once()->with($data);
+        $model->shouldReceive('save')->once()->andReturnTrue();
 
         $facade = Mockery::mock('alias:App\\Models\\Supplier');
         $facade->shouldReceive('find')->with($id)->andReturn($model);
 
-    $controller = new \App\Http\Controllers\Api\SupplierController();
-    $request = new \App\Http\Requests\UpdateSupplierRequest();
-    $request->merge($data);
-    $response = $controller->update($request, $id);
+        $controller = new \App\Http\Controllers\Api\SupplierController();
+        $request = new \App\Http\Requests\UpdateSupplierRequest();
+        $request->merge($data);
+        $response = $controller->update($request, $id);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('Supplier updated', $response->getData(true)['message']);

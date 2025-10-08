@@ -59,7 +59,7 @@ class AuthControllerTest extends TestCase
         $data = ['name' => 'T', 'email' => 't@example.com', 'password' => 'password', 'password_confirmation' => 'password'];
 
         $userMock = Mockery::mock();
-    $tokenObj = (object)['accessToken' => 'tok', 'token' => (object)['expires_at' => now()->addHour()]];
+        $tokenObj = (object)['accessToken' => 'tok', 'token' => (object)['expires_at' => now()->addHour()]];
         $userMock->shouldReceive('createToken')->with('api-token')->andReturn($tokenObj)->once();
 
         $userFacade = Mockery::mock('alias:App\\Models\\User');

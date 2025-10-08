@@ -27,7 +27,7 @@ class CategoryControllerTest extends TestCase
         $cat = Mockery::mock('alias:App\\Models\\Category');
         $cat->shouldReceive('where')->andReturn($query);
 
-    $controller = new \App\Http\Controllers\Api\CategoryController();
+        $controller = new \App\Http\Controllers\Api\CategoryController();
         $response = $controller->index($request);
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -40,10 +40,10 @@ class CategoryControllerTest extends TestCase
         $mock = Mockery::mock('alias:App\\Models\\Category');
         $mock->shouldReceive('create')->once()->andReturn((object)['id' => 'uuid', 'title' => 'Test Category']);
 
-    $controller = new \App\Http\Controllers\Api\CategoryController();
-    $request = new \App\Http\Requests\StoreCategoryRequest();
-    $request->merge(['name' => 'Test Category']);
-    $response = $controller->store($request);
+        $controller = new \App\Http\Controllers\Api\CategoryController();
+        $request = new \App\Http\Requests\StoreCategoryRequest();
+        $request->merge(['name' => 'Test Category']);
+        $response = $controller->store($request);
 
         $this->assertEquals(201, $response->getStatusCode());
         $payload = $response->getData(true);

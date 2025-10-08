@@ -3,7 +3,6 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-// migrations are handled by RefreshDatabase in tests; no Artisan call required here
 use App\Models\User;
 use App\Models\Category;
 
@@ -13,7 +12,6 @@ class CategoryFeatureTest extends TestCase
 
     protected function setUp(): void
     {
-        // Ensure tests run against PostgreSQL (must be set before RefreshDatabase/bootstrap)
         putenv('DB_CONNECTION=pgsql');
         putenv('DB_HOST=127.0.0.1');
         putenv('DB_DATABASE=app');
@@ -21,7 +19,6 @@ class CategoryFeatureTest extends TestCase
         putenv('DB_PASSWORD=app');
 
     parent::setUp();
-        // Insert a personal access oauth client; ignore failures if it already exists
         try {
             \Illuminate\Support\Facades\DB::table('oauth_clients')->insert([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
@@ -37,7 +34,6 @@ class CategoryFeatureTest extends TestCase
                 'updated_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            // ignore - client may already exist or DB column types differ
         }
     }
 
